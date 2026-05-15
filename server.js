@@ -12,11 +12,11 @@ app.use(express.static(path.join(__dirname, '.')));
 
 // Ruta raíz - servir el HTML
 app.get('/', (req, res) => {
-  const htmlPath = path.join(__dirname, 'flea_market_pos_square.html');
+  const htmlPath = path.join(__dirname, 'klou-store-app.html');
   if (fs.existsSync(htmlPath)) {
     res.sendFile(htmlPath);
   } else {
-    res.send('<h1>Flea Market POS - Servidor Activo ✓</h1><p>Cargando app...</p>');
+    res.send('<h1>Klou Store - Servidor Activo ✓</h1><p>Cargando app...</p>');
   }
 });
 
@@ -33,8 +33,6 @@ app.post('/api/process-payment', async (req, res) => {
   const { amount, paymentMethod, items } = req.body;
 
   try {
-    // Por ahora simulamos el pago
-    // En producción aquí iría la integración real con Square
     res.json({
       success: true,
       paymentId: 'payment_' + Date.now(),
@@ -55,6 +53,6 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✓ Flea Market POS Server running on port ${PORT}`);
+  console.log(`✓ Klou Store POS Server running on port ${PORT}`);
   console.log(`✓ App available at http://localhost:${PORT}`);
 });
