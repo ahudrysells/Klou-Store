@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flea Market POS - Ahudry Sells</title>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
+    <script src="https://web.squarecdn.com/v1/square.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* SCANNER */
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .scanner-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+
+        .search-results {
+            margin-top: 16px;
+        }
+
+        .item-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .item-card:active {
+            background: #f0f0f0;
+            transform: scale(0.98);
+        }
+
+        .item-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .item-card p {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .item-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* CARRITO */
+        .cart-items {
+            margin-bottom: 120px;
+        }
+
+        .cart-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .cart-item-info p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .price-modifier {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .price-input {
+            width: 70px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .btn-modify {
+            padding: 4px 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-remove {
+            padding: 6px 12px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .cart-summary {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            border-top: 2px solid #ddd;
+            padding-top: 12px;
+        }
+
+        /* CHECKOUT */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .payment-btn {
+            padding: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .payment-btn.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            color: #667eea;
+        }
+
+        .payment-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Square Payment Form */
+        .sq-input {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        #sq-card-number, #sq-expiration-date, #sq-cvv, #sq-postal-code {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .checkout-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        /* HISTORIAL */
+        .history-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .history-item h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .history-amount {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: right;
+        }
+
+        /* FOOTER */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #ddd;
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .export-btn, .clear-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .export-btn {
+            background: #51cf66;
+            color: white;
+        }
+
+        .clear-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            🛍️ Flea Market POS - Ahudry Sells
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('scanner')">📱 Escanear</button>
+            <button class="tab-btn" onclick="switchTab('cart')">🛒 Carrito</button>
+            <button class="tab-btn" onclick="switchTab('checkout')">💳 Pagar</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 Historial</button>
+        </div>
+
+        <div class="content">
+            <!-- SCANNER -->
+            <div id="scanner" class="tab-content active">
+                <div id="qr-reader" style="width: 100%; height: 300px;"></div>
+                <input type="text" id="manual-scan" class="scanner-input" placeholder="O escribe el código manualmente...">
+                <div id="search-results" class="search-results"></div>
+            </div>
+
+            <!-- CARRITO -->
+            <div id="cart" class="tab-content">
+                <div id="cart-message" style="text-align: center; color: #999; padding: 20px;">
+                    El carrito está vacío
+                </div>
+                <div id="cart-items" class="cart-items"></div>
+                <div id="cart-summary" class="cart-summary" style="display: none;">
+                    <div class="summary-row">
+                        <span>Items:</span>
+                        <span id="total-items">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-total">
+                        Total: <span id="cart-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHECKOUT -->
+            <div id="checkout" class="tab-content">
+                <div id="checkout-message" style="text-align: center; color: #999; padding: 20px;">
+                    Agrega items al carrito primero
+                </div>
+                <div id="checkout-content" style="display: none;">
+                    <div class="cart-summary">
+                        <div class="summary-row">
+                            <span>Items:</span>
+                            <span id="checkout-items">0</span>
+                        </div>
+                        <div class="summary-total">
+                            Total: <span id="checkout-total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 16px 0 12px 0; font-size: 16px;">Método de Pago</h3>
+                    <div class="payment-methods">
+                        <button class="payment-btn" onclick="selectPayment('cash')">💵 Cash</button>
+                        <button class="payment-btn" onclick="selectPayment('card')">💳 Tarjeta</button>
+                        <button class="payment-btn" onclick="selectPayment('whatnot')">📺 Whatnot</button>
+                        <button class="payment-btn" onclick="selectPayment('gift')">🎁 Regalo</button>
+                    </div>
+
+                    <div id="card-container" style="display: none; margin: 16px 0;">
+                        <input type="email" id="sq-email" class="sq-input" placeholder="Email">
+                        <input type="tel" id="sq-phone" class="sq-input" placeholder="Teléfono (opcional)">
+                        <div id="sq-card-number"></div>
+                        <div id="sq-expiration-date"></div>
+                        <div id="sq-cvv"></div>
+                        <div id="sq-postal-code"></div>
+                    </div>
+
+                    <button class="checkout-btn" onclick="processCheckout()" id="checkout-btn" disabled>
+                        Confirmar Pago
+                    </button>
+
+                    <div id="checkout-message-area"></div>
+                </div>
+            </div>
+
+            <!-- HISTORIAL -->
+            <div id="history" class="tab-content">
+                <div id="history-message" style="text-align: center; color: #999; padding: 20px;">
+                    Sin transacciones hoy
+                </div>
+                <div id="history-items"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
+            <button class="clear-btn" onclick="clearDay()">🗑️ Limpiar Día</button>
+        </div>
+    </div>
+
+    <script>
+        // Datos de items (primeros 10, agregar más si necesario)
+        const itemsData = [{"id": "0001", "itemNumber": "1966456", "description": "DKNY WOMENS SEAMLESS BRA", "brand": "DKNY", "quantity": 49, "priceDefault": 10.0, "retailPrice": 15.99}, {"id": "0002", "itemNumber": "1955649", "description": "ROOM SERVICE LNGE SHORT", "brand": "", "quantity": 23, "priceDefault": 10.0, "retailPrice": 13.99}, {"id": "0003", "itemNumber": "1943727", "description": "DKNY WOMEN'S SWIMSUIT", "brand": "DKNY", "quantity": 14, "priceDefault": 10.0, "retailPrice": 19.99}, {"id": "0004", "itemNumber": "1969848", "description": "GV AMANDA CAPRI", "brand": "Gloria Vanderbilt", "quantity": 13, "priceDefault": 10.0, "retailPrice": 15.99}, {"id": "0005", "itemNumber": "1908050", "description": "LE WOMEN'S QUILTED SET", "brand": "Lands' End", "quantity": 9, "priceDefault": 10.0, "retailPrice": 19.99}, {"id": "0006", "itemNumber": "1924472", "description": "WELL WORN LDS SRTLG PANT", "brand": "", "quantity": 10, "priceDefault": 10.0, "retailPrice": 17.99}, {"id": "0007", "itemNumber": "7772005", "description": "KS LADIES ANKLE PANT", "brand": "Kirkland Signature", "quantity": 11, "priceDefault": 10.0, "retailPrice": 14.99}, {"id": "0008", "itemNumber": "1999891", "description": "DISNEY UNSX VARSITY JKT", "brand": "", "quantity": 2, "priceDefault": 10.0, "retailPrice": 79.99}, {"id": "0009", "itemNumber": "1957107", "description": "SPLENDID WMNS RIBBED TOP", "brand": "Splendid", "quantity": 12, "priceDefault": 10.0, "retailPrice": 10.99}, {"id": "0010", "itemNumber": "1919368", "description": "MS BLK M DRSS PNT", "brand": "Mario Serrani", "quantity": 4, "priceDefault": 10.0, "retailPrice": 29.99}];
+
+        let cart = [];
+        let history = [];
+        let selectedPayment = null;
+        let qrScanner = null;
+        let web_payments_sdk = null;
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', async function() {
+            loadCartAndHistory();
+            initializeQRScanner();
+            await initializeSquarePayments();
+        });
+
+        async function initializeSquarePayments() {
+            const response = await fetch('/api/config');
+            const config = await response.json();
+            
+            web_payments_sdk = await Square.Web.payments(config.appId, config.locationId);
+        }
+
+        function initializeQRScanner() {
+            const qrReaderElement = document.getElementById('qr-reader');
+            qrScanner = new Html5Qrcode("qr-reader");
+            
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length > 0) {
+                    qrScanner.start(
+                        devices[0].id,
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        onScanSuccess,
+                        onScanError
+                    ).catch(err => console.log('QR error:', err));
+                }
+            }).catch(err => console.log('Camera error:', err));
+
+            document.getElementById('manual-scan').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const code = this.value.trim();
+                    onScanSuccess(code);
+                    this.value = '';
+                }
+            });
+        }
+
+        function onScanSuccess(decodedText) {
+            const code = decodedText.replace(/^#/, '').trim();
+            const item = itemsData.find(i => i.id === code || i.itemNumber === code);
+            
+            if (item) {
+                addToCart(item);
+                document.getElementById('manual-scan').value = '';
+                switchTab('cart');
+            } else {
+                showSearchResults(code);
+            }
+        }
+
+        function onScanError(error) {
+            // Ignorar errores silenciosos
+        }
+
+        function showSearchResults(searchTerm) {
+            const results = itemsData.filter(item => 
+                item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.id.includes(searchTerm)
+            );
+
+            const resultsDiv = document.getElementById('search-results');
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p style="text-align: center; color: #999;">No encontrado</p>';
+                return;
+            }
+
+            resultsDiv.innerHTML = results.map(item => `
+                <div class="item-card" onclick="addToCart(${JSON.stringify(item)})">
+                    <h4>${item.description}</h4>
+                    <p>${item.brand ? item.brand : 'Sin marca'}</p>
+                    <div class="item-price">$${item.priceDefault.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(item) {
+            const existingItem = cart.find(ci => ci.id === item.id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...item,
+                    quantity: 1,
+                    currentPrice: item.priceDefault
+                });
+            }
+
+            saveCartAndHistory();
+            updateCartDisplay();
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
+            saveCartAndHistory();
+            updateCartDisplay();
+        }
+
+        function updatePrice(itemId, newPrice) {
+            const item = cart.find(i => i.id === itemId);
+            if (item) {
+                item.currentPrice = parseFloat(newPrice) || item.priceDefault;
+                saveCartAndHistory();
+                updateCartDisplay();
+            }
+        }
+
+        function updateCartDisplay() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const cartMessage = document.getElementById('cart-message');
+            const cartSummary = document.getElementById('cart-summary');
+
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = '';
+                cartMessage.style.display = 'block';
+                cartSummary.style.display = 'none';
+                document.getElementById('checkout-message').style.display = 'block';
+                document.getElementById('checkout-content').style.display = 'none';
+                return;
+            }
+
+            cartMessage.style.display = 'none';
+            cartSummary.style.display = 'block';
+            document.getElementById('checkout-message').style.display = 'none';
+            document.getElementById('checkout-content').style.display = 'block';
+
+            cartItemsDiv.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4>${item.description}</h4>
+                        <p>Código: ${item.id}</p>
+                        <div class="price-modifier">
+                            <input type="number" class="price-input" value="${item.currentPrice.toFixed(2)}" 
+                                   onchange="updatePrice('${item.id}', this.value)">
+                            <span>x${item.quantity}</span>
+                            <strong style="margin-left: 8px;">$${(item.currentPrice * item.quantity).toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <button class="btn-remove" onclick="removeFromCart('${item.id}')">✕</button>
+                </div>
+            `).join('');
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.currentPrice * item.quantity), 0);
+
+            document.getElementById('total-items').textContent = totalItems;
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('cart-total').textContent = subtotal.toFixed(2);
+
+            document.getElementById('checkout-items').textContent = totalItems;
+            document.getElementById('checkout-total').textContent = subtotal.toFixed(2);
+        }
+
+        function selectPayment(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.payment-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.payment-btn').classList.add('selected');
+            document.getElementById('checkout-btn').disabled = false;
+
+            const cardContainer = document.getElementById('card-container');
+            if (method === 'card') {
+                cardContainer.style.display = 'block';
+            } else {
+                cardContainer.style.display = 'none';
+            }
+        }
+
+        async function processCheckout() {
+            if (cart.length === 0 || !selectedPayment) {
+                alert('Por favor completa el carrito y selecciona un método de pago');
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.currentPrice * item.quantity), 0);
+            const items = cart.map(item => ({
+                description: item.description,
+                quantity: item.quantity,
+                price: item.currentPrice,
+                code: item.id
+            }));
+
+            if (selectedPayment === 'card') {
+                await processCardPayment(total, items);
+            } else {
+                saveTransaction(selectedPayment, total, items);
+            }
+        }
+
+        async function processCardPayment(amount, items) {
+            const messageArea = document.getElementById('checkout-message-area');
+            const btn = document.getElementById('checkout-btn');
+            
+            try {
+                btn.disabled = true;
+                messageArea.innerHTML = '<div class="loading">Procesando pago...</div>';
+
+                // Aquí iría la integración real de Square
+                // Por ahora simularemos
+                setTimeout(() => {
+                    saveTransaction('card', amount, items);
+                    messageArea.innerHTML = '<div class="success-message">✅ Pago procesado correctamente con Square</div>';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                messageArea.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
+                btn.disabled = false;
+            }
+        }
+
+        function saveTransaction(paymentMethod, amount, items) {
+            const transaction = {
+                id: Date.now(),
+                date: new Date().toLocaleString('es-ES'),
+                method: paymentMethod,
+                amount: amount,
+                items: items,
+                itemCount: items.reduce((sum, i) => sum + i.quantity, 0)
+            };
+
+            history.unshift(transaction);
+            cart = [];
+            selectedPayment = null;
+
+            saveCartAndHistory();
+            updateCartDisplay();
+            updateHistoryDisplay();
+            switchTab('history');
+
+            setTimeout(() => {
+                document.getElementById('checkout-message-area').innerHTML = '';
+            }, 3000);
+        }
+
+        function updateHistoryDisplay() {
+            const historyDiv = document.getElementById('history-items');
+            const historyMessage = document.getElementById('history-message');
+
+            if (history.length === 0) {
+                historyDiv.innerHTML = '';
+                historyMessage.style.display = 'block';
+                return;
+            }
+
+            historyMessage.style.display = 'none';
+            historyDiv.innerHTML = history.map(transaction => `
+                <div class="history-item">
+                    <h4>${transaction.date}</h4>
+                    <div class="history-meta">
+                        <span>${transaction.itemCount} items</span>
+                        <span>${transaction.method.toUpperCase()}</span>
+                    </div>
+                    <div class="history-amount">$${transaction.amount.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function exportToCSV() {
+            if (history.length === 0) {
+                alert('No hay transacciones para exportar');
+                return;
+            }
+
+            let csv = 'Fecha,Items,Cantidad,Método,Monto\n';
+            history.forEach(trans => {
+                csv += `${trans.date},${trans.items.map(i => i.description).join(' | ')},${trans.itemCount},${trans.method},$${trans.amount.toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ventas_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function clearDay() {
+            if (confirm('¿Seguro que quieres limpiar todo el día?')) {
+                cart = [];
+                history = [];
+                selectedPayment = null;
+                saveCartAndHistory();
+                updateCartDisplay();
+                updateHistoryDisplay();
+                alert('Día limpiado ✓');
+            }
+        }
+
+        function saveCartAndHistory() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('history', JSON.stringify(history));
+        }
+
+        function loadCartAndHistory() {
+            cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            history = JSON.parse(localStorage.getItem('history') || '[]');
+            updateCartDisplay();
+            updateHistoryDisplay();
+        }
+    </script>
+</body>
+</html>
