@@ -1,7 +1,7 @@
 {
-  "name": "flea-market-pos",
-  "version": "1.0.0",
-  "description": "POS system for Flea Market with Square integration",
+  "name": "klou-store",
+  "version": "2.0.0",
+  "description": "Klou Store POS - Modern retail point of sale",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
