@@ -1,4 +1,4 @@
-# 🚀 Klou Store - Professional POS System
+# Klou Store - Professional POS System
 
 Modern point-of-sale application built with React + TypeScript + Tailwind CSS.
 
